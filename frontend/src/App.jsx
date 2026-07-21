@@ -1,0 +1,85 @@
+import React, { useState } from 'react';
+import CoachChat from './components/CoachChat';
+import PlanPlanner from './components/PlanPlanner';
+import './App.css';
+
+export default function App() {
+  const [activeTab, setActiveTab] = useState('planner'); // 'planner' or 'chat'
+  const [userProfile, setUserProfile] = useState({
+    age: 25,
+    gender: 'male',
+    weight: 70,
+    height: 175,
+    goal: 'general_fitness',
+    diet: 'vegetarian',
+    activity_level: 'active',
+  });
+
+  return (
+    <div className="app-container">
+      {/* Sidebar Navigation */}
+      <aside className="sidebar">
+        <div>
+          <div className="logo-container">
+            <div className="logo-icon">⚡</div>
+            <span className="logo-text">FitVibe.AI</span>
+          </div>
+
+          <nav>
+            <ul className="nav-links">
+              <li>
+                <div 
+                  onClick={() => setActiveTab('planner')} 
+                  className={`nav-item ${activeTab === 'planner' ? 'active' : ''}`}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" />
+                  </svg>
+                  <span>AI Blueprint</span>
+                </div>
+              </li>
+              <li>
+                <div 
+                  onClick={() => setActiveTab('chat')} 
+                  className={`nav-item ${activeTab === 'chat' ? 'active' : ''}`}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 9.75a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375m-13.5 3.01c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.184-4.183a1.14 1.14 0 0 1 .778-.332 48.294 48.294 0 0 0 5.83-.498c1.585-.233 2.708-1.626 2.708-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
+                  </svg>
+                  <span>Coach Chat</span>
+                </div>
+              </li>
+            </ul>
+          </nav>
+        </div>
+
+        <div className="sidebar-footer">
+          <div>Powered by Google Gemini</div>
+          <div style={{ fontSize: '0.75rem', opacity: 0.5 }}>Vibe Coding Project</div>
+        </div>
+      </aside>
+
+      {/* Main Content Dashboard */}
+      <main className="main-content">
+        <header className="header-section">
+          <div className="header-title">
+            <h1>
+              {activeTab === 'planner' ? 'AI Fitness & Nutrition Blueprint' : 'Train with FitVibe Coach'}
+            </h1>
+            <p>
+              {activeTab === 'planner' 
+                ? 'Generate daily workout routines and meal plans tailored to your metrics.' 
+                : 'Get advice on recipes, correct forms, rest days, or customized lifestyle questions.'}
+            </p>
+          </div>
+        </header>
+
+        {activeTab === 'planner' ? (
+          <PlanPlanner userProfile={userProfile} setUserProfile={setUserProfile} />
+        ) : (
+          <CoachChat userProfile={userProfile} />
+        )}
+      </main>
+    </div>
+  );
+}
