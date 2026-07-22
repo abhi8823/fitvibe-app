@@ -192,6 +192,11 @@ export default function PlanPlanner({ userProfile, setUserProfile, userToken, on
     e.preventDefault();
     if (isGenerating) return;
 
+    if (!userToken) {
+      onOpenAuth();
+      return;
+    }
+
     setBlueprintText('');
     setIsSaved(false);
     setSaveError('');
@@ -362,7 +367,7 @@ export default function PlanPlanner({ userProfile, setUserProfile, userToken, on
             style={{ width: '100%', marginTop: '1rem' }}
             disabled={isGenerating}
           >
-            {isGenerating ? 'Drafting Blueprint...' : 'Generate Blueprint'}
+            {isGenerating ? 'Drafting Blueprint...' : (userToken ? 'Generate Blueprint' : 'Login to Generate')}
           </button>
         </form>
 

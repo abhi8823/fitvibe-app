@@ -6,6 +6,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   if (!isOpen) return null;
@@ -42,20 +43,28 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
         throw new Error(data.detail || 'Authentication failed. Please try again.');
       }
 
-      // Save credentials to localStorage
-      localStorage.setItem('fitvibe_token', data.token);
-      localStorage.setItem('fitvibe_email', data.email);
+      if (isRegister) {
+        setSuccessMessage('Account created successfully! Please sign in below.');
+        setIsRegister(false);
+        setPassword('');
+        setConfirmPassword('');
+      } else {
+        // Save credentials to localStorage
+        localStorage.setItem('fitvibe_token', data.token);
+        localStorage.setItem('fitvibe_email', data.email);
 
-      // Trigger callback to update App state
-      onAuthSuccess(data.token, data.email);
-      onClose();
-      
-      // Reset forms
-      setEmail('');
-      setPassword('');
-      setConfirmPassword('');
+        // Trigger callback to update App state
+        onAuthSuccess(data.token, data.email);
+        onClose();
+        
+        // Reset forms
+        setEmail('');
+        setPassword('');
+        setConfirmPassword('');
+      }
     } catch (err) {
       setError(err.message);
+      setSuccessMessage('');
     } finally {
       setIsLoading(false);
     }
@@ -142,6 +151,21 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
           </div>
         )}
 
+        {successMessage && (
+          <div style={{
+            background: 'rgba(16, 185, 129, 0.1)',
+            border: '1px solid #10b981',
+            borderRadius: 'var(--radius-sm)',
+            padding: '0.75rem 1rem',
+            color: '#10b981',
+            fontSize: '0.85rem',
+            marginBottom: '1.5rem',
+            fontWeight: 500
+          }}>
+            {successMessage}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label className="form-label">Email Address</label>
@@ -204,6 +228,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
             onClick={() => {
               setIsRegister(!isRegister);
               setError('');
+              setSuccessMessage('');
             }}
             style={{
               color: 'var(--color-primary)',
