@@ -41,7 +41,7 @@ def stream_gemini_response(prompt: str, system_instruction: str = None):
             )
             
         response = client.models.generate_content_stream(
-            model='gemini-2.0-flash-lite',
+            model='gemini-3.5-flash-lite',
             contents=prompt,
             config=config
         )
