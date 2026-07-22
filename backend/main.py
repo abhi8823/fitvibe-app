@@ -140,6 +140,11 @@ class SavePlan(BaseModel):
     metrics: dict
     plan_text: str
 
+class DeletePlan(BaseModel):
+    token: str
+    plan_id: int
+
+
 def get_user_from_token(token: str):
     """Parses our simple stateless session token: 'token-{id}-{email}'"""
     if not token or not token.startswith("token-"):
@@ -209,6 +214,18 @@ def get_user_plans(token: Optional[str] = Query(None), authorization: Optional[s
         return {"plans": plans}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to retrieve plans: {str(e)}")
+
+@app.post("/api/plan/delete")
+def delete_user_plan(req: DeletePlan):
+    user = get_user_from_token(req.token)
+    if not user:
+        raise HTTPException(status_code=401, detail="Unauthorized session. Please login again.")
+    try:
+        db.delete_plan(user["id"], req.plan_id)
+        return {"status": "success"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete plan: {str(e)}")
+
 
 # Mount production frontend build directory if it exists
 

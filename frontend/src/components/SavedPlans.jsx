@@ -125,6 +125,34 @@ export default function SavedPlans({ token }) {
       return dateStr;
     }
   };
+  const handleDeletePlan = async () => {
+    if (!window.confirm("Are you sure you want to delete this fitness blueprint?")) {
+      return;
+    }
+    
+    try {
+      const response = await fetch('/api/plan/delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          token: token,
+          plan_id: selectedPlan.id
+        })
+      });
+      
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.detail || 'Failed to delete plan.');
+      }
+      
+      setSelectedPlan(null);
+      fetchPlans();
+    } catch (err) {
+      alert(`Error: ${err.message}`);
+    }
+  };
 
   return (
     <div className="dashboard-grid">
@@ -210,13 +238,22 @@ export default function SavedPlans({ token }) {
             {selectedPlan ? `${selectedPlan.goal.replace('_', ' ').toUpperCase()} BLUEPRINT` : 'Blueprint Viewer'}
           </h2>
           {selectedPlan && (
-            <button 
-              onClick={() => window.print()} 
-              className="btn btn-secondary" 
-              style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
-            >
-              Print Plan
-            </button>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button 
+                onClick={handleDeletePlan} 
+                className="btn btn-primary" 
+                style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', background: '#ff0055', borderColor: '#ff0055' }}
+              >
+                Delete Plan
+              </button>
+              <button 
+                onClick={() => window.print()} 
+                className="btn btn-secondary" 
+                style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+              >
+                Print Plan
+              </button>
+            </div>
           )}
         </div>
 

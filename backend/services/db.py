@@ -159,3 +159,14 @@ def get_saved_plans(user_id: int) -> list:
         return plans
     finally:
         conn.close()
+
+def delete_plan(user_id: int, plan_id: int):
+    """Deletes a saved blueprint for a specific user to ensure ownership verification."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("DELETE FROM saved_plans WHERE id = ? AND user_id = ?", (plan_id, user_id))
+        conn.commit()
+    finally:
+        conn.close()
+
