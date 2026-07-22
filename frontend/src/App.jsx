@@ -74,6 +74,70 @@ export default function App() {
   };
 
 
+  if (!userToken) {
+    return (
+      <div className="landing-container" style={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'radial-gradient(circle at center, #0d1527 0%, #030712 100%)',
+        padding: '2rem',
+        position: 'relative',
+        overflow: 'hidden'
+      }}>
+        {/* Glow Effects */}
+        <div style={{ position: 'absolute', top: '10%', left: '15%', width: '400px', height: '400px', background: 'radial-gradient(circle, rgba(0, 198, 255, 0.08) 0%, transparent 70%)', pointerEvents: 'none' }}></div>
+        <div style={{ position: 'absolute', bottom: '10%', right: '15%', width: '400px', height: '400px', background: 'radial-gradient(circle, rgba(255, 0, 127, 0.08) 0%, transparent 70%)', pointerEvents: 'none' }}></div>
+
+        <div className="glass-panel neon-glow-card" style={{ maxWidth: '500px', width: '100%', padding: '3.5rem 3rem', textAlign: 'center', animation: 'fadeInUp 0.6s ease-out' }}>
+          <div style={{ fontSize: '3.5rem', marginBottom: '1rem' }}>⚡</div>
+          <h1 style={{
+            fontFamily: 'var(--font-display)',
+            fontSize: '3rem',
+            fontWeight: 900,
+            marginBottom: '1rem',
+            background: 'var(--gradient-brand)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            letterSpacing: '-1px'
+          }}>
+            FitVibe.AI
+          </h1>
+          <p style={{
+            color: 'var(--text-muted)',
+            fontSize: '1.1rem',
+            lineHeight: '1.6',
+            marginBottom: '2.5rem'
+          }}>
+            Unlock personalized AI fitness blueprints, coordinate real-time meal planning, and chat with your elite virtual coach.
+          </p>
+          <button 
+            onClick={() => setIsAuthModalOpen(true)}
+            className="btn btn-primary"
+            style={{ 
+              width: '100%', 
+              padding: '1rem 2rem', 
+              fontSize: '1.1rem', 
+              fontWeight: 700,
+              boxShadow: '0 0 20px rgba(0, 198, 255, 0.3)'
+            }}
+          >
+            Start Your Journey
+          </button>
+        </div>
+
+        {/* Authentication Modal */}
+        <AuthModal 
+          isOpen={isAuthModalOpen}
+          onClose={() => setIsAuthModalOpen(false)}
+          onAuthSuccess={handleAuthSuccess}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="app-container">
       {/* Sidebar Navigation */}
