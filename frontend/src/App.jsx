@@ -48,7 +48,7 @@ export default function App() {
   };
 
   const handleDeleteAccount = async () => {
-    if (!window.confirm("WARNING: Are you sure you want to permanently deactivate and delete your FitVibe account? This will erase all your saved plans, weights, and daily logs. This action CANNOT be undone.")) {
+    if (!window.confirm("WARNING: Are you sure you want to permanently deactivate and delete your Spark Ignite account? This will erase all your saved plans, weights, and daily logs. This action CANNOT be undone.")) {
       return;
     }
     
@@ -103,7 +103,7 @@ export default function App() {
             WebkitTextFillColor: 'transparent',
             letterSpacing: '-1px'
           }}>
-            FitVibe.AI
+            Spark Ignite
           </h1>
           <p style={{
             color: 'var(--text-muted)',
@@ -145,7 +145,7 @@ export default function App() {
         <div>
           <div className="logo-container">
             <div className="logo-icon">⚡</div>
-            <span className="logo-text">FitVibe.AI</span>
+            <span className="logo-text">Spark Ignite</span>
           </div>
 
           <nav>
@@ -254,7 +254,7 @@ export default function App() {
           <div className="header-title">
             <h1>
               {activeTab === 'planner' ? 'AI Fitness & Nutrition Blueprint' : 
-               activeTab === 'chat' ? 'Train with FitVibe Coach' : 
+               activeTab === 'chat' ? 'Train with Spark Ignite Coach' : 
                activeTab === 'saved' ? 'Your Saved Blueprints' : 'Fitness Log & Diary'}
             </h1>
             <p>

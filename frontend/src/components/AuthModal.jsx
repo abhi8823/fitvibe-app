@@ -212,7 +212,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
           WebkitTextFillColor: 'transparent',
           textAlign: 'center'
         }}>
-          {authView === 'register' ? 'Join FitVibe.AI' : 
+          {authView === 'register' ? 'Join Spark Ignite' : 
            authView === 'login' ? 'Welcome Back' : 'Reset Password'}
         </h2>
         <p style={{

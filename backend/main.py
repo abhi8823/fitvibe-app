@@ -11,7 +11,7 @@ from services.gemini import stream_gemini_response, generate_gemini_text
 from services import db
 
 
-app = FastAPI(title="FitVibe API", version="1.0.0")
+app = FastAPI(title="Spark Ignite API", version="1.0.0")
 
 # Enable CORS for local development (frontend runs on different port during dev)
 app.add_middleware(
@@ -43,9 +43,9 @@ class PlanRequest(BaseModel):
     language: Optional[str] = "English"
 
 
-# System instruction to define the FitVibe Coach persona
+# System instruction to define the Spark Ignite Coach persona
 COACH_SYSTEM_INSTRUCTION = (
-    "You are FitVibe, an elite, motivational, and highly knowledgeable AI Health, Nutrition, and Workout Coach. "
+    "You are Spark Ignite, an elite, motivational, and highly knowledgeable AI Health, Nutrition, and Workout Coach. "
     "Your goal is to help the user achieve their fitness targets with precise, actionable, and science-backed advice. "
     "Maintain a supportive, energetic, and positive tone. Make your answers concise, structured, and easy to read "
     "using markdown (bullet points, bold highlights, sub-headers). Avoid lengthy paragraphs. "
@@ -57,7 +57,7 @@ COACH_SYSTEM_INSTRUCTION = (
 
 @app.get("/api/health")
 def health_check():
-    return {"status": "healthy", "service": "FitVibe Backend", "keys_configured": os.getenv("GEMINI_API_KEY") is not None}
+    return {"status": "healthy", "service": "Spark Ignite Backend", "keys_configured": os.getenv("GEMINI_API_KEY") is not None}
 
 @app.post("/api/plan/stream")
 def stream_plan(req: PlanRequest):
@@ -112,7 +112,7 @@ def stream_plan(req: PlanRequest):
 @app.post("/api/chat/stream")
 def stream_chat(req: ChatRequest):
     """
-    Handles conversational interactions with the FitVibe Coach.
+    Handles conversational interactions with the Spark Ignite Coach.
     Streams the response back.
     """
     # Construct conversation history prompt

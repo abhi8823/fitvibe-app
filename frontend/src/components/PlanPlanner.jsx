@@ -405,7 +405,7 @@ export default function PlanPlanner({ userProfile, setUserProfile, userToken, on
       {/* Blueprint Stream Panel */}
       <div className="glass-panel plan-container">
         <div className="plan-header">
-          <h2 className="plan-title">FitVibe AI Blueprint</h2>
+          <h2 className="plan-title">Spark Ignite AI Blueprint</h2>
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
             {blueprintText && !isGenerating && (
               <>
