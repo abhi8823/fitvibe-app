@@ -1,65 +1,89 @@
 /* Custom styles specific to App component can go here. Main layout styles are in index.css. */
 
 @media print {
-  /* Hide all layout components, sidebars, buttons and forms */
-  body *, 
-  .sidebar, 
-  .header-section, 
-  .dashboard-grid, 
-  .landing-container, 
-  .btn, 
-  button, 
-  select, 
-  input, 
+  /* Hide the sidebar navigation */
+  .sidebar,
+  /* Hide the main dashboard page header */
+  .header-section,
+  /* Hide the left sidebar columns (metrics form or saved plans list) */
+  .dashboard-grid > div:first-child,
+  /* Hide all buttons, icons, and form inputs */
+  button,
+  .btn,
+  select,
+  input,
   form,
   svg {
     display: none !important;
   }
-  
-  /* Show only the plan container and its children */
-  .plan-container, 
-  .plan-container * {
+
+  /* Reset layout grids and flexboxes to normal blocks to print full width */
+  .app-container {
     display: block !important;
-    visibility: visible !important;
   }
   
-  /* Reset plan container card back to standard full width black text on white background */
-  .plan-container {
-    position: absolute !important;
-    left: 0 !important;
-    top: 0 !important;
+  .main-content {
+    padding: 0 !important;
+    margin: 0 !important;
     width: 100% !important;
-    background: none !important;
-    color: #000 !important;
+  }
+  
+  .dashboard-grid {
+    display: block !important;
+    width: 100% !important;
+  }
+
+  /* Style plan container for paper (black text on clean white page) */
+  .plan-container {
+    width: 100% !important;
+    background: #ffffff !important;
+    color: #000000 !important;
     border: none !important;
     box-shadow: none !important;
     padding: 0 !important;
     margin: 0 !important;
   }
   
+  /* Reset plan text colors to high-contrast black on white */
   .plan-content, 
   .plan-content * {
-    color: #000 !important;
-    background: none !important;
+    color: #000000 !important;
+    background: transparent !important;
   }
   
-  /* Ensure header title remains but clear any controls */
+  /* Format table borders and cells cleanly for black/white paper */
+  table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+    margin-top: 15px !important;
+  }
+  
+  th, td {
+    border: 1px solid #ddd !important;
+    padding: 8px !important;
+    text-align: left !important;
+    color: #000000 !important;
+  }
+  
+  th {
+    background-color: #f2f2f2 !important;
+  }
+
+  /* Bold highlights and headers formatting */
+  h1, h2, h3, h4, strong {
+    color: #000000 !important;
+  }
+  
+  /* Format plan title header for print */
   .plan-header {
     display: flex !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    border-bottom: 2px solid #000 !important;
+    border-bottom: 2px solid #000000 !important;
     padding-bottom: 10px !important;
     margin-bottom: 20px !important;
   }
   
   .plan-header h2 {
-    color: #000 !important;
+    color: #000000 !important;
     font-size: 1.5rem !important;
-  }
-  
-  .plan-header div, 
-  .plan-header button {
-    display: none !important;
   }
 }
