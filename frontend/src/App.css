@@ -1,13 +1,10 @@
 /* Custom styles specific to App component can go here. Main layout styles are in index.css. */
 
 @media print {
-  /* Hide the sidebar navigation */
+  /* Hide the sidebar navigation, layout header, inputs, and buttons */
   .sidebar,
-  /* Hide the main dashboard page header */
   .header-section,
-  /* Hide the left sidebar columns (metrics form or saved plans list) */
   .dashboard-grid > div:first-child,
-  /* Hide all buttons, icons, and form inputs */
   button,
   .btn,
   select,
@@ -17,7 +14,22 @@
     display: none !important;
   }
 
-  /* Reset layout grids and flexboxes to normal blocks to print full width */
+  /* Reset layout scroll containers to flow naturally for printing */
+  html, 
+  body, 
+  .app-container, 
+  .main-content, 
+  .dashboard-grid, 
+  .plan-container {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    overflow-y: visible !important;
+    background: #ffffff !important;
+    background-image: none !important;
+    color: #000000 !important;
+  }
+
   .app-container {
     display: block !important;
   }
@@ -33,18 +45,15 @@
     width: 100% !important;
   }
 
-  /* Style plan container for paper (black text on clean white page) */
+  /* Style plan container for paper (black text on white page) */
   .plan-container {
     width: 100% !important;
-    background: #ffffff !important;
-    color: #000000 !important;
     border: none !important;
     box-shadow: none !important;
     padding: 0 !important;
     margin: 0 !important;
   }
   
-  /* Reset plan text colors to high-contrast black on white */
   .plan-content, 
   .plan-content * {
     color: #000000 !important;
