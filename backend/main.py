@@ -227,6 +227,79 @@ def delete_user_plan(req: DeletePlan):
         raise HTTPException(status_code=500, detail=f"Failed to delete plan: {str(e)}")
 
 
+# Pydantic models for tracking functionality
+class WeightLogRequest(BaseModel):
+    token: str
+    weight: float
+    date: str
+
+class DailyLogRequest(BaseModel):
+    token: str
+    type: str # 'food' or 'workout'
+    description: str
+    calories: int
+    date: str
+
+class DailyLogDeleteRequest(BaseModel):
+    token: str
+    log_id: int
+
+@app.post("/api/logs/weight")
+def add_weight_log(req: WeightLogRequest):
+    user = get_user_from_token(req.token)
+    if not user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    try:
+        db.log_weight(user["id"], req.weight, req.date)
+        return {"status": "success"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/logs/weight")
+def get_weight_logs(token: str):
+    user = get_user_from_token(token)
+    if not user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    try:
+        history = db.get_weight_history(user["id"])
+        return {"history": history}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/logs/daily")
+def add_daily_log(req: DailyLogRequest):
+    user = get_user_from_token(req.token)
+    if not user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    try:
+        log_id = db.add_daily_log(user["id"], req.type, req.description, req.calories, req.date)
+        return {"status": "success", "id": log_id}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/logs/daily")
+def get_daily_logs(token: str, date: str):
+    user = get_user_from_token(token)
+    if not user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    try:
+        logs = db.get_daily_logs(user["id"], date)
+        return {"logs": logs}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/logs/daily/delete")
+def delete_daily_log(req: DailyLogDeleteRequest):
+    user = get_user_from_token(req.token)
+    if not user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    try:
+        db.delete_daily_log(user["id"], req.log_id)
+        return {"status": "success"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # Mount production frontend build directory if it exists
 
 frontend_dist_path = os.path.join(os.path.dirname(__file__), "frontend", "dist")

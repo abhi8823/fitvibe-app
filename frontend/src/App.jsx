@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import CoachChat from './components/CoachChat';
 import PlanPlanner from './components/PlanPlanner';
 import SavedPlans from './components/SavedPlans';
+import FitnessTracker from './components/FitnessTracker';
 import AuthModal from './components/AuthModal';
+
 import './App.css';
 
 export default function App() {
@@ -80,18 +82,33 @@ export default function App() {
                 </div>
               </li>
               {userToken && (
-                <li>
-                  <div 
-                    onClick={() => setActiveTab('saved')} 
-                    className={`nav-item ${activeTab === 'saved' ? 'active' : ''}`}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" />
-                    </svg>
-                    <span>Saved Plans</span>
-                  </div>
-                </li>
+                <>
+                  <li>
+                    <div 
+                      onClick={() => setActiveTab('saved')} 
+                      className={`nav-item ${activeTab === 'saved' ? 'active' : ''}`}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" />
+                      </svg>
+                      <span>Saved Plans</span>
+                    </div>
+                  </li>
+                  <li>
+                    <div 
+                      onClick={() => setActiveTab('tracker')} 
+                      className={`nav-item ${activeTab === 'tracker' ? 'active' : ''}`}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6a7.5 7.5 0 1 0 7.5 7.5h-7.5V6Z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 10.5H21A7.5 7.5 0 0 0 13.5 3v7.5Z" />
+                      </svg>
+                      <span>Fitness Tracker</span>
+                    </div>
+                  </li>
+                </>
               )}
+
             </ul>
           </nav>
         </div>
@@ -130,13 +147,16 @@ export default function App() {
           <div className="header-title">
             <h1>
               {activeTab === 'planner' ? 'AI Fitness & Nutrition Blueprint' : 
-               activeTab === 'chat' ? 'Train with FitVibe Coach' : 'Your Saved Blueprints'}
+               activeTab === 'chat' ? 'Train with FitVibe Coach' : 
+               activeTab === 'saved' ? 'Your Saved Blueprints' : 'Fitness Log & Diary'}
             </h1>
             <p>
               {activeTab === 'planner' ? 'Generate daily workout routines and meal plans tailored to your metrics.' : 
                activeTab === 'chat' ? 'Get advice on recipes, correct forms, rest days, or customized lifestyle questions.' :
-               'Review your previously generated plans and workouts.'}
+               activeTab === 'saved' ? 'Review your previously generated plans and workouts.' :
+               'Log weight trends, track daily foods, and log exercise logs.'}
             </p>
+
           </div>
         </header>
 
@@ -150,6 +170,8 @@ export default function App() {
         )}
         {activeTab === 'chat' && <CoachChat userProfile={userProfile} />}
         {activeTab === 'saved' && <SavedPlans token={userToken} />}
+        {activeTab === 'tracker' && <FitnessTracker token={userToken} userProfile={userProfile} />}
+
       </main>
 
       {/* Authentication Modal */}

@@ -40,6 +40,30 @@ def init_db():
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )
     """)
+
+    # Create weight_logs table
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS weight_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        weight REAL NOT NULL,
+        log_date TEXT NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+    """)
+    
+    # Create daily_logs table (food/workout log)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS daily_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        type TEXT NOT NULL, -- 'food' or 'workout'
+        description TEXT NOT NULL,
+        calories INTEGER NOT NULL,
+        log_date TEXT NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+    """)
     
     conn.commit()
     conn.close()
@@ -169,4 +193,67 @@ def delete_plan(user_id: int, plan_id: int):
         conn.commit()
     finally:
         conn.close()
+
+# Weight Tracking Operations
+def log_weight(user_id: int, weight: float, log_date: str):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        # Check if record exists for this date, if so update, else insert
+        cursor.execute("SELECT id FROM weight_logs WHERE user_id = ? AND log_date = ?", (user_id, log_date))
+        exists = cursor.fetchone()
+        if exists:
+            cursor.execute("UPDATE weight_logs SET weight = ? WHERE id = ?", (weight, exists["id"]))
+        else:
+            cursor.execute("INSERT INTO weight_logs (user_id, weight, log_date) VALUES (?, ?, ?)", (user_id, weight, log_date))
+        conn.commit()
+    finally:
+        conn.close()
+
+def get_weight_history(user_id: int) -> list:
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT weight, log_date FROM weight_logs WHERE user_id = ? ORDER BY log_date ASC", (user_id,))
+        rows = cursor.fetchall()
+        return [{"weight": r["weight"], "date": r["log_date"]} for r in rows]
+    finally:
+        conn.close()
+
+# Daily Food & Activity Logging Operations
+def add_daily_log(user_id: int, log_type: str, description: str, calories: int, log_date: str) -> int:
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "INSERT INTO daily_logs (user_id, type, description, calories, log_date) VALUES (?, ?, ?, ?, ?)",
+            (user_id, log_type, description, calories, log_date)
+        )
+        conn.commit()
+        return cursor.lastrowid
+    finally:
+        conn.close()
+
+def get_daily_logs(user_id: int, log_date: str) -> list:
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "SELECT id, type, description, calories FROM daily_logs WHERE user_id = ? AND log_date = ?",
+            (user_id, log_date)
+        )
+        rows = cursor.fetchall()
+        return [{"id": r["id"], "type": r["type"], "description": r["description"], "calories": r["calories"]} for r in rows]
+    finally:
+        conn.close()
+
+def delete_daily_log(user_id: int, log_id: int):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("DELETE FROM daily_logs WHERE id = ? AND user_id = ?", (log_id, user_id))
+        conn.commit()
+    finally:
+        conn.close()
+
 
