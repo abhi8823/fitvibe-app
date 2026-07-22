@@ -597,3 +597,29 @@ body {
   color: var(--text-muted);
   margin-left: 0.25rem;
 }
+
+/* Premium Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(10, 15, 26, 0.4);
+  backdrop-filter: blur(10px);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--color-primary), var(--color-secondary));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary);
+  box-shadow: 0 0 10px var(--color-primary);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+

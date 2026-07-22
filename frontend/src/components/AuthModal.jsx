@@ -167,6 +167,8 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
+      overflowY: 'auto',
+      padding: '2rem 1rem',
       zIndex: 1000,
       animation: 'fadeInUp 0.3s ease-out'
     }}>
@@ -175,8 +177,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
         style={{
           width: '100%',
           maxWidth: '420px',
-          maxHeight: '90vh',
-          overflowY: 'auto',
+          margin: 'auto',
           padding: '2.5rem',
           position: 'relative',
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.9)',
