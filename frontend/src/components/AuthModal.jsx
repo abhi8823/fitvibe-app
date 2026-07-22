@@ -105,40 +105,12 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
     }
   };
 
-  const handleFetchQuestion = async (e) => {
-    e.preventDefault();
-    setError('');
-    setSuccessMessage('');
-
-    if (!email.trim()) {
-      setError('Please enter your email.');
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const response = await fetch(`/api/auth/forgot-password?email=${encodeURIComponent(email)}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.detail || 'Failed to fetch recovery question.');
-      }
-
-      setFetchedQuestion(data.recovery_question);
-      setForgotStep(2);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleResetPassword = async (e) => {
     e.preventDefault();
     setError('');
     setSuccessMessage('');
 
-    if (!recoveryAnswer.trim() || !newPassword.trim() || !confirmNewPassword.trim()) {
+    if (!email.trim() || !recoveryAnswer.trim() || !newPassword.trim() || !confirmNewPassword.trim()) {
       setError('Please fill in all fields.');
       return;
     }
@@ -157,6 +129,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
         },
         body: JSON.stringify({
           email: email.trim(),
+          question: recoveryQuestion,
           answer: recoveryAnswer.trim(),
           new_password: newPassword
         })
@@ -174,13 +147,13 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
       setRecoveryAnswer('');
       setNewPassword('');
       setConfirmNewPassword('');
-      setForgotStep(1);
     } catch (err) {
       setError(err.message);
     } finally {
       setIsLoading(false);
     }
   };
+
 
   return (
     <div style={{
@@ -418,120 +391,119 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
             </div>
           </form>
         ) : (
-          /* --- Forgot Password Multi-step reset form --- */
-          forgotStep === 1 ? (
-            <form onSubmit={handleFetchQuestion}>
-              <div className="form-group">
-                <label className="form-label">Email Address</label>
+          /* --- Forgot Password Single-step Form --- */
+          <form onSubmit={handleResetPassword}>
+            <div className="form-group">
+              <label className="form-label">Email Address</label>
+              <input 
+                type="email" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="name@example.com"
+                className="form-input"
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Select Recovery Question</label>
+              <select 
+                value={recoveryQuestion}
+                onChange={(e) => setRecoveryQuestion(e.target.value)}
+                className="form-input"
+              >
+                {RECOVERY_QUESTIONS.map((q, idx) => (
+                  <option key={idx} value={q}>{q}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Secret Recovery Answer</label>
+              <input 
+                type="text" 
+                value={recoveryAnswer}
+                onChange={(e) => setRecoveryAnswer(e.target.value)}
+                placeholder="Enter your recovery answer"
+                className="form-input"
+                required
+              />
+            </div>
+
+            <div className="form-group" style={{ position: 'relative' }}>
+              <label className="form-label">New Password</label>
+              <div style={{ position: 'relative' }}>
                 <input 
-                  type="email" 
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@example.com"
+                  type={showNewPassword ? "text" : "password"} 
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="••••••••"
                   className="form-input"
                   required
+                  style={{ paddingRight: '2.75rem' }}
                 />
-              </div>
-              <div style={{ marginTop: '2rem' }}>
-                <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={isLoading}>
-                  {isLoading ? 'Fetching...' : 'Verify Email'}
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  style={{
+                    position: 'absolute',
+                    right: '0.75rem',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--text-muted)',
+                    cursor: 'pointer',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    textTransform: 'uppercase'
+                  }}
+                >
+                  {showNewPassword ? "Hide" : "Show"}
                 </button>
               </div>
-            </form>
-          ) : (
-            <form onSubmit={handleResetPassword}>
-              <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
-                <span style={{ color: 'var(--text-muted)' }}>Question:</span> <strong style={{ color: 'var(--color-primary)' }}>{fetchedQuestion}</strong>
-              </div>
+            </div>
 
-              <div className="form-group">
-                <label className="form-label">Your Answer</label>
+            <div className="form-group" style={{ position: 'relative' }}>
+              <label className="form-label">Confirm New Password</label>
+              <div style={{ position: 'relative' }}>
                 <input 
-                  type="text" 
-                  value={recoveryAnswer}
-                  onChange={(e) => setRecoveryAnswer(e.target.value)}
-                  placeholder="Enter your secret answer"
+                  type={showNewPassword ? "text" : "password"} 
+                  value={confirmNewPassword}
+                  onChange={(e) => setConfirmNewPassword(e.target.value)}
+                  placeholder="••••••••"
                   className="form-input"
                   required
+                  style={{ paddingRight: '2.75rem' }}
                 />
-              </div>
-
-              <div className="form-group" style={{ position: 'relative' }}>
-                <label className="form-label">New Password</label>
-                <div style={{ position: 'relative' }}>
-                  <input 
-                    type={showNewPassword ? "text" : "password"} 
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="form-input"
-                    required
-                    style={{ paddingRight: '2.75rem' }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowNewPassword(!showNewPassword)}
-                    style={{
-                      position: 'absolute',
-                      right: '0.75rem',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      background: 'none',
-                      border: 'none',
-                      color: 'var(--text-muted)',
-                      cursor: 'pointer',
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      textTransform: 'uppercase'
-                    }}
-                  >
-                    {showNewPassword ? "Hide" : "Show"}
-                  </button>
-                </div>
-              </div>
-
-              <div className="form-group" style={{ position: 'relative' }}>
-                <label className="form-label">Confirm New Password</label>
-                <div style={{ position: 'relative' }}>
-                  <input 
-                    type={showNewPassword ? "text" : "password"} 
-                    value={confirmNewPassword}
-                    onChange={(e) => setConfirmNewPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="form-input"
-                    required
-                    style={{ paddingRight: '2.75rem' }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowNewPassword(!showNewPassword)}
-                    style={{
-                      position: 'absolute',
-                      right: '0.75rem',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      background: 'none',
-                      border: 'none',
-                      color: 'var(--text-muted)',
-                      cursor: 'pointer',
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      textTransform: 'uppercase'
-                    }}
-                  >
-                    {showNewPassword ? "Hide" : "Show"}
-                  </button>
-                </div>
-              </div>
-
-
-              <div style={{ marginTop: '2rem' }}>
-                <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={isLoading}>
-                  {isLoading ? 'Resetting...' : 'Reset Password'}
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  style={{
+                    position: 'absolute',
+                    right: '0.75rem',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--text-muted)',
+                    cursor: 'pointer',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    textTransform: 'uppercase'
+                  }}
+                >
+                  {showNewPassword ? "Hide" : "Show"}
                 </button>
               </div>
-            </form>
-          )
+            </div>
+
+            <div style={{ marginTop: '2rem' }}>
+              <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={isLoading}>
+                {isLoading ? 'Resetting...' : 'Reset Password'}
+              </button>
+            </div>
+          </form>
         )}
 
         {/* Footer Toggle Navigation */}

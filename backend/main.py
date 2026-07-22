@@ -140,8 +140,10 @@ class UserAuth(BaseModel):
 
 class ResetPasswordRequest(BaseModel):
     email: str
+    question: str
     answer: str
     new_password: str
+
 
 
 class SavePlan(BaseModel):
@@ -207,12 +209,13 @@ def forgot_password(email: str):
 @app.post("/api/auth/reset-password")
 def reset_password(req: ResetPasswordRequest):
     try:
-        db.reset_password_with_recovery(req.email, req.answer, req.new_password)
+        db.reset_password_with_recovery(req.email, req.question, req.answer, req.new_password)
         return {"status": "success"}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
 
 
 @app.post("/api/plan/save")

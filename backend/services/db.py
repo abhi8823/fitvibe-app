@@ -283,20 +283,24 @@ def get_recovery_question(email: str) -> str:
     finally:
         conn.close()
 
-def reset_password_with_recovery(email: str, answer: str, new_password: str):
-    """Verifies recovery answer and updates password."""
+def reset_password_with_recovery(email: str, question: str, answer: str, new_password: str):
+    """Verifies both security question and recovery answer, then updates password."""
     email = email.strip().lower()
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
-        cursor.execute("SELECT id, salt, recovery_answer FROM users WHERE email = ?", (email,))
+        cursor.execute("SELECT id, salt, recovery_question, recovery_answer FROM users WHERE email = ?", (email,))
         row = cursor.fetchone()
         if not row:
             raise ValueError("No account found with this email.")
             
-        user_id, salt, stored_answer_hash = row["id"], row["salt"], row["recovery_answer"]
-        if not stored_answer_hash:
+        user_id, salt, stored_question, stored_answer_hash = row["id"], row["salt"], row["recovery_question"], row["recovery_answer"]
+        if not stored_answer_hash or not stored_question:
             raise ValueError("No recovery question configured for this account.")
+            
+        # Verify question
+        if stored_question.strip() != question.strip():
+            raise ValueError("Incorrect recovery question selected.")
             
         # Verify answer case-insensitively
         computed_answer_hash, _ = hash_password(answer.strip().lower(), salt)
@@ -309,6 +313,7 @@ def reset_password_with_recovery(email: str, answer: str, new_password: str):
         conn.commit()
     finally:
         conn.close()
+
 
 def delete_user(user_id: int):
     """Permanently deletes a user from the users table, cascading all associated plans and logs."""
