@@ -175,6 +175,8 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
         style={{
           width: '100%',
           maxWidth: '420px',
+          maxHeight: '90vh',
+          overflowY: 'auto',
           padding: '2.5rem',
           position: 'relative',
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.9)',

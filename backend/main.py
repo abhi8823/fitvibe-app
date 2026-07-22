@@ -407,6 +407,49 @@ def log_daily_ai(req: AICalorieRequest):
         raise HTTPException(status_code=500, detail=f"AI parsing error: {str(e)}")
 
 
+@app.post("/api/logs/daily/ai-workout")
+def log_daily_workout_ai(req: AICalorieRequest):
+    user = get_user_from_token(req.token)
+    if not user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    
+    # Configure prompt for Gemini to parse workout and return JSON
+    prompt = (
+        f"You are an AI fitness assistant. The user logged the following physical activity in natural language:\n"
+        f"'{req.text}'\n\n"
+        f"Analyze the text and estimate the calories burned for each exercise or workout. "
+        f"Respond ONLY with a valid JSON array of objects, where each object has a 'description' (string) "
+        f"and 'calories' (integer). Example: [{{\"description\": \"5K Run\", \"calories\": 350}}, {{\"description\": \"Bench Press\", \"calories\": 120}}]. "
+        f"Do not include markdown tags, code block indicators, backticks, or any conversational text. "
+        f"Only return the raw JSON array."
+    )
+    
+    try:
+        # Call non-streaming text generator helper
+        raw_text = generate_gemini_text(prompt).strip()
+        
+        # Clean any backticks or markdown JSON wrapper if Gemini added it
+        if raw_text.startswith("```json"):
+            raw_text = raw_text.replace("```json", "", 1)
+        if raw_text.startswith("```"):
+            raw_text = raw_text.replace("```", "", 1)
+        if raw_text.endswith("```"):
+            raw_text = raw_text[:-3].strip()
+            
+        parsed_items = json.loads(raw_text.strip())
+        
+        # Insert each activity item into DB
+        for item in parsed_items:
+            desc = item.get("description", "Unknown activity")
+            cals = int(item.get("calories", 0))
+            db.add_daily_log(user["id"], "workout", desc, cals, req.date)
+            
+        return {"status": "success", "logged_items": parsed_items}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"AI parsing error: {str(e)}")
+
+
+
 
 # Mount production frontend build directory if it exists
 

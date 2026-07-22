@@ -28,6 +28,11 @@ export default function FitnessTracker({ token, userProfile }) {
   const [aiMealText, setAiMealText] = useState('');
   const [isAiLogging, setIsAiLogging] = useState(false);
 
+  // AI Workout Quick-Logger States
+  const [aiActivityText, setAiActivityText] = useState('');
+  const [isAiActivityLogging, setIsAiActivityLogging] = useState(false);
+
+
 
   // Daily budget from userProfile or default
   const getDailyCalorieBudget = () => {
@@ -197,6 +202,40 @@ export default function FitnessTracker({ token, userProfile }) {
       setIsAiLogging(false);
     }
   };
+
+  const handleAIActivityLogSubmit = async (e) => {
+    e.preventDefault();
+    if (!aiActivityText.trim()) return;
+
+    setIsAiActivityLogging(true);
+    try {
+      const response = await fetch('/api/logs/daily/ai-workout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          token: token,
+          text: aiActivityText.trim(),
+          date: selectedDate
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.detail || 'Failed to log workout with AI.');
+      }
+
+      setAiActivityText('');
+      fetchData(); // Reload logs list
+      alert(`AI Logged Successfully:\n${data.logged_items.map(item => `• ${item.description}: ${item.calories} kcal burned`).join('\n')}`);
+    } catch (err) {
+      alert(`AI Log Error: ${err.message}`);
+    } finally {
+      setIsAiActivityLogging(false);
+    }
+  };
+
 
 
   // Calculations
@@ -444,6 +483,41 @@ export default function FitnessTracker({ token, userProfile }) {
                 />
                 <button type="submit" className="btn btn-primary" style={{ padding: '0.5rem 1.25rem' }}>Add</button>
               </form>
+
+              {/* AI Activity Quick Log Box */}
+              <div style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '0.85rem 1rem', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', marginBottom: '1.25rem' }}>
+                <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-accent)', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <span>✨ AI Activity Quick-Logger</span>
+                  <span style={{ fontSize: '0.7rem', fontWeight: 500, color: 'var(--text-muted)' }}>(Describe your workouts)</span>
+                </div>
+                <form onSubmit={handleAIActivityLogSubmit} style={{ display: 'flex', gap: '0.5rem' }}>
+                  <input 
+                    type="text" 
+                    value={aiActivityText}
+                    onChange={(e) => setAiActivityText(e.target.value)}
+                    placeholder="e.g. ran 5km in 25 mins, or did 30 mins weight lifting"
+                    className="form-input"
+                    style={{ flexGrow: 1, padding: '0.4rem 0.75rem', fontSize: '0.85rem' }}
+                    required
+                  />
+                  <button 
+                    type="submit" 
+                    className="btn btn-secondary" 
+                    style={{ 
+                      padding: '0.4rem 0.85rem', 
+                      fontSize: '0.8rem',
+                      background: 'var(--gradient-brand)',
+                      border: 'none',
+                      color: '#fff',
+                      minWidth: '90px'
+                    }}
+                    disabled={isAiActivityLogging}
+                  >
+                    {isAiActivityLogging ? 'Parsing...' : 'AI Log'}
+                  </button>
+                </form>
+              </div>
+
 
               {/* Workout Items List */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '150px', overflowY: 'auto' }}>
