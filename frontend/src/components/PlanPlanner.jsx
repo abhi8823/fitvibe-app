@@ -98,7 +98,9 @@ export default function PlanPlanner({ userProfile, setUserProfile, userToken, on
     goal: userProfile?.goal || 'general_fitness',
     diet: userProfile?.diet || 'vegetarian',
     activity_level: userProfile?.activity_level || 'active',
+    language: userProfile?.language || 'English',
   });
+
 
   const [bmi, setBmi] = useState(0);
   const [calories, setCalories] = useState(0);
@@ -358,6 +360,18 @@ export default function PlanPlanner({ userProfile, setUserProfile, userToken, on
               <option value="light">Lightly Active (1-3 days/week exercise)</option>
               <option value="active">Active (3-5 days/week intense exercise)</option>
               <option value="very_active">Very Active (6-7 days/week heavy exercise)</option>
+            </select>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Preferred Plan Language</label>
+            <select 
+              value={formData.language}
+              onChange={(e) => handleInputChange('language', e.target.value)}
+              className="form-input"
+            >
+              <option value="English">English</option>
+              <option value="Hinglish">Hinglish (Hindi in English Script)</option>
+              <option value="Hindi">Hindi (हिंदी)</option>
             </select>
           </div>
 

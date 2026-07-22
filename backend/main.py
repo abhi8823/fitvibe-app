@@ -40,6 +40,8 @@ class PlanRequest(BaseModel):
     goal: str # e.g. weight_loss, muscle_gain, general_fitness
     diet: str # e.g. vegetarian, vegan, non_vegetarian, keto
     activity_level: str # e.g. sedentary, light, active, very_active
+    language: Optional[str] = "English"
+
 
 # System instruction to define the FitVibe Coach persona
 COACH_SYSTEM_INSTRUCTION = (
@@ -77,7 +79,12 @@ def stream_plan(req: PlanRequest):
         f"2. A customized 7-Day Workout Plan matching their goals.\n"
         f"3. A 7-Day Meal Plan fitting their dietary pattern.\n"
         f"4. 3 Actionable Lifestyle & Recovery Hacks to speed up progress.\n"
-        f"Format the output beautifully with clear section headers, bold bullet points, and tables where helpful."
+        f"Format the output beautifully with clear section headers, bold bullet points, and tables where helpful.\n\n"
+        f"CRITICAL: You MUST write the entire generated blueprint (all text, section titles, workout schedules, food items, and descriptions) in the following language: {req.language}.\n"
+        f"- If language is 'Hinglish', write everything in conversational Hinglish (Hindi written in English Latin characters, e.g., 'Aapko subah 7 baje 2 ande khane chahiye').\n"
+        f"- If language is 'Hindi', write everything in Devanagari script (e.g., 'आपको सुबह 7 बजे 2 अंडे खाने चाहिए').\n"
+        f"- If language is 'English', write everything in English."
+
     )
 
     async def plan_generator():
