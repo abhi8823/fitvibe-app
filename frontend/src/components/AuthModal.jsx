@@ -1,32 +1,62 @@
 import React, { useState } from 'react';
 
+const RECOVERY_QUESTIONS = [
+  "What is your pet's name?",
+  "What was the name of your first school?",
+  "In what city were you born?",
+  "What is your mother's maiden name?",
+  "What is your favorite sports team?"
+];
+
 export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
-  const [isRegister, setIsRegister] = useState(false);
+  const [authView, setAuthView] = useState('login'); // 'login', 'register', 'forgot'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  
+  // Password Recovery States
+  const [recoveryQuestion, setRecoveryQuestion] = useState(RECOVERY_QUESTIONS[0]);
+  const [recoveryAnswer, setRecoveryAnswer] = useState('');
+  const [forgotStep, setForgotStep] = useState(1); // 1 = enter email, 2 = answer & reset
+  const [fetchedQuestion, setFetchedQuestion] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   if (!isOpen) return null;
 
-  const handleSubmit = async (e) => {
+  const handleAuthSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccessMessage('');
 
     if (!email.trim() || !password.trim()) {
       setError('Please fill in all fields.');
       return;
     }
 
-    if (isRegister && password !== confirmPassword) {
-      setError('Passwords do not match.');
-      return;
+    if (authView === 'register') {
+      if (password !== confirmPassword) {
+        setError('Passwords do not match.');
+        return;
+      }
+      if (!recoveryAnswer.trim()) {
+        setError('Please provide an answer to the recovery question.');
+        return;
+      }
     }
 
     setIsLoading(true);
-    const endpoint = isRegister ? '/api/auth/register' : '/api/auth/login';
+    const endpoint = authView === 'register' ? '/api/auth/register' : '/api/auth/login';
+    const payload = authView === 'register' ? {
+      email,
+      password,
+      recovery_question: recoveryQuestion,
+      recovery_answer: recoveryAnswer
+    } : { email, password };
 
     try {
       const response = await fetch(endpoint, {
@@ -34,7 +64,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();
@@ -43,11 +73,12 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
         throw new Error(data.detail || 'Authentication failed. Please try again.');
       }
 
-      if (isRegister) {
+      if (authView === 'register') {
         setSuccessMessage('Account created successfully! Please sign in below.');
-        setIsRegister(false);
+        setAuthView('login');
         setPassword('');
         setConfirmPassword('');
+        setRecoveryAnswer('');
       } else {
         // Save credentials to localStorage
         localStorage.setItem('fitvibe_token', data.token);
@@ -60,11 +91,86 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
         // Reset forms
         setEmail('');
         setPassword('');
-        setConfirmPassword('');
       }
     } catch (err) {
       setError(err.message);
-      setSuccessMessage('');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleFetchQuestion = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccessMessage('');
+
+    if (!email.trim()) {
+      setError('Please enter your email.');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetch(`/api/auth/forgot-password?email=${encodeURIComponent(email)}`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.detail || 'Failed to fetch recovery question.');
+      }
+
+      setFetchedQuestion(data.recovery_question);
+      setForgotStep(2);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccessMessage('');
+
+    if (!recoveryAnswer.trim() || !newPassword.trim() || !confirmNewPassword.trim()) {
+      setError('Please fill in all fields.');
+      return;
+    }
+
+    if (newPassword !== confirmNewPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email.trim(),
+          answer: recoveryAnswer.trim(),
+          new_password: newPassword
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.detail || 'Password reset failed.');
+      }
+
+      setSuccessMessage('Password reset successfully! Please sign in with your new password.');
+      setAuthView('login');
+      setPassword('');
+      setConfirmPassword('');
+      setRecoveryAnswer('');
+      setNewPassword('');
+      setConfirmNewPassword('');
+      setForgotStep(1);
+    } catch (err) {
+      setError(err.message);
     } finally {
       setIsLoading(false);
     }
@@ -125,7 +231,8 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
           WebkitTextFillColor: 'transparent',
           textAlign: 'center'
         }}>
-          {isRegister ? 'Join FitVibe.AI' : 'Welcome Back'}
+          {authView === 'register' ? 'Join FitVibe.AI' : 
+           authView === 'login' ? 'Welcome Back' : 'Reset Password'}
         </h2>
         <p style={{
           color: 'var(--text-muted)',
@@ -133,7 +240,9 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
           textAlign: 'center',
           marginBottom: '2rem'
         }}>
-          {isRegister ? 'Create an account to save your fitness blueprints.' : 'Sign in to access your saved plans and coach.'}
+          {authView === 'register' ? 'Create an account to save your fitness blueprints.' : 
+           authView === 'login' ? 'Sign in to access your saved plans and coach.' : 
+           'Enter your email to verify your secret recovery question.'}
         </p>
 
         {error && (
@@ -166,79 +275,197 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label className="form-label">Email Address</label>
-            <input 
-              type="email" 
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="name@example.com"
-              className="form-input"
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Password</label>
-            <input 
-              type="password" 
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              className="form-input"
-              required
-            />
-          </div>
-
-          {isRegister && (
+        {/* --- View Forms --- */}
+        {authView !== 'forgot' ? (
+          <form onSubmit={handleAuthSubmit}>
             <div className="form-group">
-              <label className="form-label">Confirm Password</label>
+              <label className="form-label">Email Address</label>
+              <input 
+                type="email" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="name@example.com"
+                className="form-input"
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <label className="form-label">Password</label>
+                {authView === 'login' && (
+                  <span 
+                    onClick={() => { setAuthView('forgot'); setForgotStep(1); setError(''); setSuccessMessage(''); }}
+                    style={{ fontSize: '0.8rem', color: 'var(--color-primary)', cursor: 'pointer', textDecoration: 'underline' }}
+                  >
+                    Forgot Password?
+                  </span>
+                )}
+              </div>
               <input 
                 type="password" 
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 className="form-input"
                 required
               />
             </div>
-          )}
 
-          <div style={{ marginTop: '2rem' }}>
-            <button 
-              type="submit" 
-              className="btn btn-primary" 
-              style={{ width: '100%' }}
-              disabled={isLoading}
-            >
-              {isLoading ? 'Processing...' : (isRegister ? 'Sign Up' : 'Sign In')}
-            </button>
-          </div>
-        </form>
+            {authView === 'register' && (
+              <>
+                <div className="form-group">
+                  <label className="form-label">Confirm Password</label>
+                  <input 
+                    type="password" 
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="form-input"
+                    required
+                  />
+                </div>
+                
+                <hr style={{ border: 'none', borderTop: '1px solid var(--border-color)', margin: '1.5rem 0' }} />
+                
+                <div className="form-group">
+                  <label className="form-label">Secret Recovery Question</label>
+                  <select 
+                    value={recoveryQuestion}
+                    onChange={(e) => setRecoveryQuestion(e.target.value)}
+                    className="form-input"
+                  >
+                    {RECOVERY_QUESTIONS.map((q, idx) => (
+                      <option key={idx} value={q}>{q}</option>
+                    ))}
+                  </select>
+                </div>
 
+                <div className="form-group">
+                  <label className="form-label">Recovery Answer</label>
+                  <input 
+                    type="text" 
+                    value={recoveryAnswer}
+                    onChange={(e) => setRecoveryAnswer(e.target.value)}
+                    placeholder="Case-insensitive answer"
+                    className="form-input"
+                    required
+                  />
+                </div>
+              </>
+            )}
+
+            <div style={{ marginTop: '2rem' }}>
+              <button 
+                type="submit" 
+                className="btn btn-primary" 
+                style={{ width: '100%' }}
+                disabled={isLoading}
+              >
+                {isLoading ? 'Processing...' : (authView === 'register' ? 'Sign Up' : 'Sign In')}
+              </button>
+            </div>
+          </form>
+        ) : (
+          /* --- Forgot Password Multi-step reset form --- */
+          forgotStep === 1 ? (
+            <form onSubmit={handleFetchQuestion}>
+              <div className="form-group">
+                <label className="form-label">Email Address</label>
+                <input 
+                  type="email" 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="name@example.com"
+                  className="form-input"
+                  required
+                />
+              </div>
+              <div style={{ marginTop: '2rem' }}>
+                <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={isLoading}>
+                  {isLoading ? 'Fetching...' : 'Verify Email'}
+                </button>
+              </div>
+            </form>
+          ) : (
+            <form onSubmit={handleResetPassword}>
+              <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Question:</span> <strong style={{ color: 'var(--color-primary)' }}>{fetchedQuestion}</strong>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Your Answer</label>
+                <input 
+                  type="text" 
+                  value={recoveryAnswer}
+                  onChange={(e) => setRecoveryAnswer(e.target.value)}
+                  placeholder="Enter your secret answer"
+                  className="form-input"
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">New Password</label>
+                <input 
+                  type="password" 
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="form-input"
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Confirm New Password</label>
+                <input 
+                  type="password" 
+                  value={confirmNewPassword}
+                  onChange={(e) => setConfirmNewPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="form-input"
+                  required
+                />
+              </div>
+
+              <div style={{ marginTop: '2rem' }}>
+                <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={isLoading}>
+                  {isLoading ? 'Resetting...' : 'Reset Password'}
+                </button>
+              </div>
+            </form>
+          )
+        )}
+
+        {/* Footer Toggle Navigation */}
         <div style={{
           marginTop: '1.5rem',
           textAlign: 'center',
           fontSize: '0.875rem',
           color: 'var(--text-muted)'
         }}>
-          {isRegister ? 'Already have an account? ' : "Don't have an account? "}
-          <span 
-            onClick={() => {
-              setIsRegister(!isRegister);
-              setError('');
-              setSuccessMessage('');
-            }}
-            style={{
-              color: 'var(--color-primary)',
-              cursor: 'pointer',
-              fontWeight: 600,
-              textDecoration: 'underline'
-            }}
-          >
-            {isRegister ? 'Sign In' : 'Sign Up'}
-          </span>
+          {authView === 'register' && (
+            <>
+              Already have an account?{' '}
+              <span onClick={() => { setAuthView('login'); setError(''); setSuccessMessage(''); }} style={{ color: 'var(--color-primary)', cursor: 'pointer', fontWeight: 600, textDecoration: 'underline' }}>
+                Sign In
+              </span>
+            </>
+          )}
+          {authView === 'login' && (
+            <>
+              Don't have an account?{' '}
+              <span onClick={() => { setAuthView('register'); setError(''); setSuccessMessage(''); }} style={{ color: 'var(--color-primary)', cursor: 'pointer', fontWeight: 600, textDecoration: 'underline' }}>
+                Sign Up
+              </span>
+            </>
+          )}
+          {authView === 'forgot' && (
+            <span onClick={() => { setAuthView('login'); setError(''); setSuccessMessage(''); setForgotStep(1); }} style={{ color: 'var(--color-primary)', cursor: 'pointer', fontWeight: 600, textDecoration: 'underline' }}>
+              Back to Login
+            </span>
+          )}
         </div>
       </div>
     </div>

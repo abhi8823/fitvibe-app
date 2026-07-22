@@ -133,6 +133,14 @@ def stream_chat(req: ChatRequest):
 class UserAuth(BaseModel):
     email: str
     password: str
+    recovery_question: Optional[str] = None
+    recovery_answer: Optional[str] = None
+
+class ResetPasswordRequest(BaseModel):
+    email: str
+    answer: str
+    new_password: str
+
 
 class SavePlan(BaseModel):
     token: str
@@ -162,7 +170,7 @@ def get_user_from_token(token: str):
 @app.post("/api/auth/register")
 def register(req: UserAuth):
     try:
-        user_id = db.register_user(req.email, req.password)
+        user_id = db.register_user(req.email, req.password, req.recovery_question, req.recovery_answer)
         # Generate simple session token
         token = f"token-{user_id}-{req.email.strip().lower()}"
         return {"status": "success", "token": token, "email": req.email.strip().lower()}
@@ -170,6 +178,7 @@ def register(req: UserAuth):
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
 
 @app.post("/api/auth/login")
 def login(req: UserAuth):
@@ -182,6 +191,27 @@ def login(req: UserAuth):
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+@app.get("/api/auth/forgot-password")
+def forgot_password(email: str):
+    try:
+        question = db.get_recovery_question(email)
+        return {"recovery_question": question}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/auth/reset-password")
+def reset_password(req: ResetPasswordRequest):
+    try:
+        db.reset_password_with_recovery(req.email, req.answer, req.new_password)
+        return {"status": "success"}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.post("/api/plan/save")
 def save_user_plan(req: SavePlan):

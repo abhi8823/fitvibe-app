@@ -65,9 +65,18 @@ def init_db():
     )
     """)
     
+    # Dynamic schema migration: add recovery_question and recovery_answer to users if missing
+    cursor.execute("PRAGMA table_info(users)")
+    columns = [row["name"] for row in cursor.fetchall()]
+    if "recovery_question" not in columns:
+        cursor.execute("ALTER TABLE users ADD COLUMN recovery_question TEXT")
+    if "recovery_answer" not in columns:
+        cursor.execute("ALTER TABLE users ADD COLUMN recovery_answer TEXT")
+
     conn.commit()
     conn.close()
     print(f"Database initialized successfully at: {DB_PATH}")
+
 
 # Call init_db immediately when backend loads to ensure tables are ready
 init_db()
@@ -86,9 +95,9 @@ def hash_password(password: str, salt: str = None) -> tuple:
     return hashed, salt
 
 # Auth Operations
-def register_user(email: str, password: str) -> int:
+def register_user(email: str, password: str, recovery_question: str = None, recovery_answer: str = None) -> int:
     """
-    Registers a new user. 
+    Registers a new user with recovery question/answer. 
     Returns the user_id if successful, or raises ValueError.
     """
     email = email.strip().lower()
@@ -106,15 +115,18 @@ def register_user(email: str, password: str) -> int:
             
         # Hash password and insert user
         password_hash, salt = hash_password(password)
+        answer_hash, _ = hash_password(recovery_answer.strip().lower(), salt) if recovery_answer else (None, None)
+        
         cursor.execute(
-            "INSERT INTO users (email, password_hash, salt) VALUES (?, ?, ?)",
-            (email, password_hash, salt)
+            "INSERT INTO users (email, password_hash, salt, recovery_question, recovery_answer) VALUES (?, ?, ?, ?, ?)",
+            (email, password_hash, salt, recovery_question, answer_hash)
         )
         conn.commit()
         user_id = cursor.lastrowid
         return user_id
     finally:
         conn.close()
+
 
 def login_user(email: str, password: str) -> dict:
     """
@@ -255,5 +267,48 @@ def delete_daily_log(user_id: int, log_id: int):
         conn.commit()
     finally:
         conn.close()
+
+# Password Reset with Recovery Question Operations
+def get_recovery_question(email: str) -> str:
+    """Retrieves the recovery question for a given email."""
+    email = email.strip().lower()
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT recovery_question FROM users WHERE email = ?", (email,))
+        row = cursor.fetchone()
+        if not row:
+            raise ValueError("No account found with this email.")
+        return row["recovery_question"] or "What is your recovery answer?"
+    finally:
+        conn.close()
+
+def reset_password_with_recovery(email: str, answer: str, new_password: str):
+    """Verifies recovery answer and updates password."""
+    email = email.strip().lower()
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT id, salt, recovery_answer FROM users WHERE email = ?", (email,))
+        row = cursor.fetchone()
+        if not row:
+            raise ValueError("No account found with this email.")
+            
+        user_id, salt, stored_answer_hash = row["id"], row["salt"], row["recovery_answer"]
+        if not stored_answer_hash:
+            raise ValueError("No recovery question configured for this account.")
+            
+        # Verify answer case-insensitively
+        computed_answer_hash, _ = hash_password(answer.strip().lower(), salt)
+        if computed_answer_hash != stored_answer_hash:
+            raise ValueError("Incorrect recovery answer.")
+            
+        # Update user password
+        new_hash, _ = hash_password(new_password, salt)
+        cursor.execute("UPDATE users SET password_hash = ? WHERE id = ?", (new_hash, user_id))
+        conn.commit()
+    finally:
+        conn.close()
+
 
 
