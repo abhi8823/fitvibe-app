@@ -1,12 +1,13 @@
 import os
 import asyncio
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Header, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import List, Optional
 from services.gemini import stream_gemini_response
+from services import db
 
 app = FastAPI(title="FitVibe API", version="1.0.0")
 
@@ -128,7 +129,89 @@ def stream_chat(req: ChatRequest):
 
     return StreamingResponse(chat_generator(), media_type="text/plain")
 
+# Pydantic models for authentication
+class UserAuth(BaseModel):
+    email: str
+    password: str
+
+class SavePlan(BaseModel):
+    token: str
+    goal: str
+    metrics: dict
+    plan_text: str
+
+def get_user_from_token(token: str):
+    """Parses our simple stateless session token: 'token-{id}-{email}'"""
+    if not token or not token.startswith("token-"):
+        return None
+    try:
+        parts = token.split("-")
+        if len(parts) >= 3:
+            user_id = int(parts[1])
+            email = parts[2]
+            return {"id": user_id, "email": email}
+    except Exception:
+        return None
+    return None
+
+@app.post("/api/auth/register")
+def register(req: UserAuth):
+    try:
+        user_id = db.register_user(req.email, req.password)
+        # Generate simple session token
+        token = f"token-{user_id}-{req.email.strip().lower()}"
+        return {"status": "success", "token": token, "email": req.email.strip().lower()}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+@app.post("/api/auth/login")
+def login(req: UserAuth):
+    try:
+        user = db.login_user(req.email, req.password)
+        # Generate simple session token
+        token = f"token-{user['id']}-{user['email']}"
+        return {"status": "success", "token": token, "email": user["email"]}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+@app.post("/api/plan/save")
+def save_user_plan(req: SavePlan):
+    user = get_user_from_token(req.token)
+    if not user:
+        raise HTTPException(status_code=401, detail="Unauthorized session. Please login again.")
+    
+    try:
+        plan_id = db.save_plan(user["id"], req.goal, req.metrics, req.plan_text)
+        return {"status": "success", "plan_id": plan_id}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to save plan: {str(e)}")
+
+@app.get("/api/plans")
+def get_user_plans(token: Optional[str] = Query(None), authorization: Optional[str] = Header(None)):
+    # Retrieve token from query params or Authorization header
+    auth_token = token
+    if not auth_token and authorization:
+        if authorization.startswith("Bearer "):
+            auth_token = authorization.split(" ")[1]
+        else:
+            auth_token = authorization
+            
+    user = get_user_from_token(auth_token)
+    if not user:
+        raise HTTPException(status_code=401, detail="Unauthorized session. Please login again.")
+        
+    try:
+        plans = db.get_saved_plans(user["id"])
+        return {"plans": plans}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve plans: {str(e)}")
+
 # Mount production frontend build directory if it exists
+
 frontend_dist_path = os.path.join(os.path.dirname(__file__), "frontend", "dist")
 if os.path.exists(frontend_dist_path):
     app.mount("/", StaticFiles(directory=frontend_dist_path, html=True), name="static")

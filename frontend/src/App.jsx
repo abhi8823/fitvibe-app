@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import CoachChat from './components/CoachChat';
 import PlanPlanner from './components/PlanPlanner';
+import SavedPlans from './components/SavedPlans';
+import AuthModal from './components/AuthModal';
 import './App.css';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('planner'); // 'planner' or 'chat'
+  const [activeTab, setActiveTab] = useState('planner'); // 'planner', 'chat', or 'saved'
   const [userProfile, setUserProfile] = useState({
     age: 25,
     gender: 'male',
@@ -14,6 +16,34 @@ export default function App() {
     diet: 'vegetarian',
     activity_level: 'active',
   });
+
+  // Auth State
+  const [userToken, setUserToken] = useState(null);
+  const [userEmail, setUserEmail] = useState(null);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
+  // Load auth state from localStorage on mount
+  useEffect(() => {
+    const token = localStorage.getItem('fitvibe_token');
+    const email = localStorage.getItem('fitvibe_email');
+    if (token && email) {
+      setUserToken(token);
+      setUserEmail(email);
+    }
+  }, []);
+
+  const handleAuthSuccess = (token, email) => {
+    setUserToken(token);
+    setUserEmail(email);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('fitvibe_token');
+    localStorage.removeItem('fitvibe_email');
+    setUserToken(null);
+    setUserEmail(null);
+    setActiveTab('planner');
+  };
 
   return (
     <div className="app-container">
@@ -49,13 +79,48 @@ export default function App() {
                   <span>Coach Chat</span>
                 </div>
               </li>
+              {userToken && (
+                <li>
+                  <div 
+                    onClick={() => setActiveTab('saved')} 
+                    className={`nav-item ${activeTab === 'saved' ? 'active' : ''}`}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" />
+                    </svg>
+                    <span>Saved Plans</span>
+                  </div>
+                </li>
+              )}
             </ul>
           </nav>
         </div>
 
+        {/* Sidebar Footer with Login/Logout */}
         <div className="sidebar-footer">
-          <div>Powered by Google Gemini</div>
-          <div style={{ fontSize: '0.75rem', opacity: 0.5 }}>Vibe Coding Project</div>
+          {userToken ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                Account: <strong>{userEmail}</strong>
+              </span>
+              <button 
+                onClick={handleLogout}
+                className="btn btn-secondary"
+                style={{ padding: '0.4rem 1rem', fontSize: '0.8rem', width: '100%' }}
+              >
+                Sign Out
+              </button>
+            </div>
+          ) : (
+            <button 
+              onClick={() => setIsAuthModalOpen(true)}
+              className="btn btn-primary"
+              style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', width: '100%' }}
+            >
+              Sign In / Register
+            </button>
+          )}
+          <div style={{ fontSize: '0.75rem', opacity: 0.5, marginTop: '0.5rem' }}>Powered by Google Gemini</div>
         </div>
       </aside>
 
@@ -64,22 +129,35 @@ export default function App() {
         <header className="header-section">
           <div className="header-title">
             <h1>
-              {activeTab === 'planner' ? 'AI Fitness & Nutrition Blueprint' : 'Train with FitVibe Coach'}
+              {activeTab === 'planner' ? 'AI Fitness & Nutrition Blueprint' : 
+               activeTab === 'chat' ? 'Train with FitVibe Coach' : 'Your Saved Blueprints'}
             </h1>
             <p>
-              {activeTab === 'planner' 
-                ? 'Generate daily workout routines and meal plans tailored to your metrics.' 
-                : 'Get advice on recipes, correct forms, rest days, or customized lifestyle questions.'}
+              {activeTab === 'planner' ? 'Generate daily workout routines and meal plans tailored to your metrics.' : 
+               activeTab === 'chat' ? 'Get advice on recipes, correct forms, rest days, or customized lifestyle questions.' :
+               'Review your previously generated plans and workouts.'}
             </p>
           </div>
         </header>
 
-        {activeTab === 'planner' ? (
-          <PlanPlanner userProfile={userProfile} setUserProfile={setUserProfile} />
-        ) : (
-          <CoachChat userProfile={userProfile} />
+        {activeTab === 'planner' && (
+          <PlanPlanner 
+            userProfile={userProfile} 
+            setUserProfile={setUserProfile} 
+            userToken={userToken}
+            onOpenAuth={() => setIsAuthModalOpen(true)}
+          />
         )}
+        {activeTab === 'chat' && <CoachChat userProfile={userProfile} />}
+        {activeTab === 'saved' && <SavedPlans token={userToken} />}
       </main>
+
+      {/* Authentication Modal */}
+      <AuthModal 
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onAuthSuccess={handleAuthSuccess}
+      />
     </div>
   );
 }

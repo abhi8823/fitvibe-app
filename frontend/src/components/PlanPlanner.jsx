@@ -89,7 +89,7 @@ const parseBlueprintMarkdown = (text) => {
   return html;
 };
 
-export default function PlanPlanner({ userProfile, setUserProfile }) {
+export default function PlanPlanner({ userProfile, setUserProfile, userToken, onOpenAuth }) {
   const [formData, setFormData] = useState({
     age: userProfile?.age || 25,
     gender: userProfile?.gender || 'male',
@@ -104,6 +104,46 @@ export default function PlanPlanner({ userProfile, setUserProfile }) {
   const [calories, setCalories] = useState(0);
   const [blueprintText, setBlueprintText] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+
+  // Saved plan state variables
+  const [isSaved, setIsSaved] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
+
+  const handleSavePlan = async () => {
+    if (!userToken) {
+      onOpenAuth();
+      return;
+    }
+
+    setIsSaving(true);
+    setSaveError('');
+
+    try {
+      const response = await fetch('/api/plan/save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          token: userToken,
+          goal: formData.goal,
+          metrics: formData,
+          plan_text: blueprintText
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.detail || 'Failed to save blueprint.');
+      }
+      setIsSaved(true);
+    } catch (err) {
+      setSaveError(err.message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   // Recalculate physical metrics locally on-the-fly
   useEffect(() => {
@@ -153,6 +193,8 @@ export default function PlanPlanner({ userProfile, setUserProfile }) {
     if (isGenerating) return;
 
     setBlueprintText('');
+    setIsSaved(false);
+    setSaveError('');
     setIsGenerating(true);
 
     try {
@@ -232,77 +274,71 @@ export default function PlanPlanner({ userProfile, setUserProfile }) {
             </div>
           </div>
 
-          <div className="form-group">
-            <label className="form-label">Age</label>
-            <div className="range-slider-container">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div className="form-group">
+              <label className="form-label">Age (years)</label>
               <input 
-                type="range" 
-                min="15" 
-                max="80" 
+                type="number" 
                 value={formData.age}
-                onChange={(e) => handleInputChange('age', parseInt(e.target.value))}
-                className="range-slider"
+                onChange={(e) => handleInputChange('age', parseInt(e.target.value) || 0)}
+                className="form-input"
+                min="10"
+                max="100"
               />
-              <span className="slider-value">{formData.age} <span style={{fontSize: '0.75rem', color: 'var(--text-muted)'}}>Yrs</span></span>
             </div>
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Height (cm)</label>
-            <div className="range-slider-container">
+            <div className="form-group">
+              <label className="form-label">Height (cm)</label>
               <input 
-                type="range" 
-                min="120" 
-                max="220" 
+                type="number" 
                 value={formData.height}
-                onChange={(e) => handleInputChange('height', parseInt(e.target.value))}
-                className="range-slider"
+                onChange={(e) => handleInputChange('height', parseInt(e.target.value) || 0)}
+                className="form-input"
+                min="100"
+                max="250"
               />
-              <span className="slider-value">{formData.height} <span style={{fontSize: '0.75rem', color: 'var(--text-muted)'}}>cm</span></span>
             </div>
           </div>
 
           <div className="form-group">
-            <label className="form-label">Weight (kg)</label>
-            <div className="range-slider-container">
-              <input 
-                type="range" 
-                min="40" 
-                max="150" 
-                value={formData.weight}
-                onChange={(e) => handleInputChange('weight', parseFloat(e.target.value))}
-                className="range-slider"
-              />
-              <span className="slider-value">{formData.weight} <span style={{fontSize: '0.75rem', color: 'var(--text-muted)'}}>kg</span></span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+              <label className="form-label">Weight</label>
+              <span style={{ color: 'var(--color-primary)', fontWeight: 700 }}>{formData.weight} kg</span>
             </div>
+            <input 
+              type="range" 
+              min="40" 
+              max="150" 
+              value={formData.weight}
+              onChange={(e) => handleInputChange('weight', parseInt(e.target.value))}
+              style={{ width: '100%', accentColor: 'var(--color-primary)' }}
+            />
           </div>
 
           <div className="form-group">
-            <label className="form-label">Primary Fitness Goal</label>
+            <label className="form-label">Fitness Goal</label>
             <select 
               value={formData.goal}
               onChange={(e) => handleInputChange('goal', e.target.value)}
-              className="form-select"
+              className="form-input"
             >
-              <option value="general_fitness">General Fitness / Health Maintenance</option>
-              <option value="weight_loss">Fat Loss & Conditioning</option>
-              <option value="muscle_gain">Hypertrophy & Strength Gain</option>
-              <option value="athletic_performance">Athletic Performance & Speed</option>
+              <option value="general_fitness">General Fitness & Toning</option>
+              <option value="weight_loss">Weight Loss & Fat Burn</option>
+              <option value="muscle_gain">Muscle Building & Hypertrophy</option>
+              <option value="endurance">Cardiovascular Endurance</option>
             </select>
           </div>
 
           <div className="form-group">
-            <label className="form-label">Dietary Restriction</label>
+            <label className="form-label">Dietary Preference</label>
             <select 
               value={formData.diet}
               onChange={(e) => handleInputChange('diet', e.target.value)}
-              className="form-select"
+              className="form-input"
             >
               <option value="vegetarian">Vegetarian</option>
               <option value="vegan">Vegan</option>
-              <option value="non_vegetarian">Non-Vegetarian</option>
-              <option value="keto">Keto-friendly</option>
-              <option value="paleo">Paleo Diet</option>
+              <option value="non_vegetarian">Non-Vegetarian (All proteins)</option>
+              <option value="keto">Keto-Friendly (Low carb)</option>
             </select>
           </div>
 
@@ -311,41 +347,37 @@ export default function PlanPlanner({ userProfile, setUserProfile }) {
             <select 
               value={formData.activity_level}
               onChange={(e) => handleInputChange('activity_level', e.target.value)}
-              className="form-select"
+              className="form-input"
             >
-              <option value="sedentary">Sedentary (Office job / minimal exercise)</option>
-              <option value="light">Lightly Active (1-3 days light exercise/week)</option>
-              <option value="active">Active (3-5 days moderate workout/week)</option>
-              <option value="very_active">Very Active (6-7 days heavy training/week)</option>
+              <option value="sedentary">Sedentary (Little to no exercise)</option>
+              <option value="light">Lightly Active (1-3 days/week exercise)</option>
+              <option value="active">Active (3-5 days/week intense exercise)</option>
+              <option value="very_active">Very Active (6-7 days/week heavy exercise)</option>
             </select>
           </div>
 
-          <div style={{ marginTop: '2rem' }}>
-            <button 
-              type="submit" 
-              className="btn btn-primary" 
-              style={{ width: '100%' }}
-              disabled={isGenerating}
-            >
-              {isGenerating ? 'Drafting Blueprint...' : 'Generate AI Fitness Blueprint'}
-            </button>
-          </div>
+          <button 
+            type="submit" 
+            className="btn btn-primary" 
+            style={{ width: '100%', marginTop: '1rem' }}
+            disabled={isGenerating}
+          >
+            {isGenerating ? 'Drafting Blueprint...' : 'Generate Blueprint'}
+          </button>
         </form>
 
-        {/* Dynamic Estimator Cards */}
-        <div className="metrics-row" style={{ marginTop: '2rem' }}>
-          <div className="metric-card">
-            <div className="metric-label">Estimated BMI</div>
-            <div className="metric-val">{bmi}</div>
-            <div style={{ color: bmiStatus.color, fontSize: '0.85rem', fontWeight: 700, marginTop: '0.25rem' }}>
-              {bmiStatus.text}
+        {/* Live calculated metrics HUD */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '2rem', borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem' }}>
+          <div className="metrics-row" style={{ gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: 0 }}>
+            <div className="metric-card" style={{ padding: '1rem' }}>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Estimated BMI</div>
+              <div style={{ fontSize: '1.5rem', fontWeight: 800, color: bmiStatus.color, fontFamily: 'var(--font-display)' }}>{bmi}</div>
+              <div style={{ fontSize: '0.75rem', fontWeight: 600, color: bmiStatus.color }}>{bmiStatus.text}</div>
             </div>
-          </div>
-          <div className="metric-card">
-            <div className="metric-label">Target Intake</div>
-            <div className="metric-val">{calories}</div>
-            <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
-              kcal / day
+            <div className="metric-card" style={{ padding: '1rem' }}>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Target Intake</div>
+              <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#fff', fontFamily: 'var(--font-display)' }}>{calories}</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>kcal / day</div>
             </div>
           </div>
         </div>
@@ -355,16 +387,43 @@ export default function PlanPlanner({ userProfile, setUserProfile }) {
       <div className="glass-panel plan-container">
         <div className="plan-header">
           <h2 className="plan-title">FitVibe AI Blueprint</h2>
-          {blueprintText && !isGenerating && (
-            <button 
-              onClick={() => window.print()} 
-              className="btn btn-secondary" 
-              style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
-            >
-              Print Plan
-            </button>
-          )}
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            {blueprintText && !isGenerating && (
+              <>
+                {userToken ? (
+                  <button 
+                    onClick={handleSavePlan}
+                    className="btn btn-primary"
+                    style={{ padding: '0.5rem 1.15rem', fontSize: '0.85rem' }}
+                    disabled={isSaving || isSaved}
+                  >
+                    {isSaving ? 'Saving...' : isSaved ? 'Saved ✓' : 'Save to Profile'}
+                  </button>
+                ) : (
+                  <button 
+                    onClick={onOpenAuth}
+                    className="btn btn-primary"
+                    style={{ padding: '0.5rem 1.15rem', fontSize: '0.85rem' }}
+                  >
+                    Login to Save
+                  </button>
+                )}
+                <button 
+                  onClick={() => window.print()} 
+                  className="btn btn-secondary" 
+                  style={{ padding: '0.5rem 1.15rem', fontSize: '0.85rem' }}
+                >
+                  Print Plan
+                </button>
+              </>
+            )}
+          </div>
         </div>
+        {saveError && (
+          <div style={{ color: 'var(--color-accent)', fontSize: '0.85rem', marginTop: '0.5rem', padding: '0 0.5rem' }}>
+            Failed to save: {saveError}
+          </div>
+        )}
 
         <div className="plan-content">
           {blueprintText ? (
