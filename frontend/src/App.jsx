@@ -47,6 +47,33 @@ export default function App() {
     setActiveTab('planner');
   };
 
+  const handleDeleteAccount = async () => {
+    if (!window.confirm("WARNING: Are you sure you want to permanently deactivate and delete your FitVibe account? This will erase all your saved plans, weights, and daily logs. This action CANNOT be undone.")) {
+      return;
+    }
+    
+    try {
+      const response = await fetch('/api/auth/delete-account', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token: userToken })
+      });
+      
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.detail || 'Failed to delete account.');
+      }
+      
+      alert("Your account has been successfully deleted.");
+      handleLogout();
+    } catch (err) {
+      alert(`Error: ${err.message}`);
+    }
+  };
+
+
   return (
     <div className="app-container">
       {/* Sidebar Navigation */}
@@ -127,7 +154,23 @@ export default function App() {
               >
                 Sign Out
               </button>
+              <button 
+                onClick={handleDeleteAccount}
+                style={{ 
+                  background: 'none', 
+                  border: 'none', 
+                  color: '#ff3366', 
+                  fontSize: '0.75rem', 
+                  cursor: 'pointer', 
+                  textDecoration: 'underline', 
+                  marginTop: '0.5rem',
+                  fontWeight: 600
+                }}
+              >
+                Deactivate & Delete Account
+              </button>
             </div>
+
           ) : (
             <button 
               onClick={() => setIsAuthModalOpen(true)}

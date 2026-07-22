@@ -310,5 +310,16 @@ def reset_password_with_recovery(email: str, answer: str, new_password: str):
     finally:
         conn.close()
 
+def delete_user(user_id: int):
+    """Permanently deletes a user from the users table, cascading all associated plans and logs."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("DELETE FROM users WHERE id = ?", (user_id,))
+        conn.commit()
+    finally:
+        conn.close()
+
+
 
 

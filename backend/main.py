@@ -6,8 +6,9 @@ from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import List, Optional
-from services.gemini import stream_gemini_response
+from services.gemini import stream_gemini_response, generate_gemini_text
 from services import db
+
 
 app = FastAPI(title="FitVibe API", version="1.0.0")
 
@@ -328,6 +329,68 @@ def delete_daily_log(req: DailyLogDeleteRequest):
         return {"status": "success"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+# Pydantic models for deactivation and AI logs
+class DeactivateAccountRequest(BaseModel):
+    token: str
+
+class AICalorieRequest(BaseModel):
+    token: str
+    text: str
+    date: str
+
+@app.post("/api/auth/delete-account")
+def delete_account(req: DeactivateAccountRequest):
+    user = get_user_from_token(req.token)
+    if not user:
+        raise HTTPException(status_code=401, detail="Unauthorized session. Please login again.")
+    try:
+        db.delete_user(user["id"])
+        return {"status": "success"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete account: {str(e)}")
+
+@app.post("/api/logs/daily/ai")
+def log_daily_ai(req: AICalorieRequest):
+    user = get_user_from_token(req.token)
+    if not user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    
+    # Configure prompt for Gemini to parse food and return JSON
+    prompt = (
+        f"You are an AI nutritionist. The user logged the following meal in natural language:\n"
+        f"'{req.text}'\n\n"
+        f"Analyze the text and estimate the calories for each food item. "
+        f"Respond ONLY with a valid JSON array of objects, where each object has a 'description' (string) "
+        f"and 'calories' (integer). Example: [{{\"description\": \"2 Rotis\", \"calories\": 240}}, {{\"description\": \"Paneer Tikka\", \"calories\": 300}}]. "
+        f"Do not include markdown tags, code block indicators, backticks, or any conversational text. "
+        f"Only return the raw JSON array."
+    )
+    
+    try:
+        # Call non-streaming text generator helper
+        raw_text = generate_gemini_text(prompt).strip()
+        
+        # Clean any backticks or markdown JSON wrapper if Gemini added it
+        if raw_text.startswith("```json"):
+            raw_text = raw_text.replace("```json", "", 1)
+        if raw_text.startswith("```"):
+            raw_text = raw_text.replace("```", "", 1)
+        if raw_text.endswith("```"):
+            raw_text = raw_text[:-3].strip()
+            
+        parsed_items = json.loads(raw_text.strip())
+        
+        # Insert each item into DB
+        for item in parsed_items:
+            desc = item.get("description", "Unknown food")
+            cals = int(item.get("calories", 0))
+            db.add_daily_log(user["id"], "food", desc, cals, req.date)
+            
+        return {"status": "success", "logged_items": parsed_items}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"AI parsing error: {str(e)}")
+
 
 
 # Mount production frontend build directory if it exists

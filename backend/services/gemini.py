@@ -51,3 +51,28 @@ def stream_gemini_response(prompt: str, system_instruction: str = None):
                 yield chunk.text
     except Exception as e:
         yield f"\n[Error generating response: {str(e)}]"
+
+def generate_gemini_text(prompt: str, system_instruction: str = None) -> str:
+    """Generates standard non-streaming text from Gemini for utility API routes."""
+    global client
+    if not client:
+        api_key = os.getenv("GEMINI_API_KEY")
+        if api_key:
+            client = genai.Client(api_key=api_key)
+            
+    if not client:
+        raise ValueError("GEMINI_API_KEY is missing.")
+        
+    config = None
+    if system_instruction:
+        config = types.GenerateContentConfig(
+            system_instruction=system_instruction
+        )
+        
+    response = client.models.generate_content(
+        model='gemini-3.5-flash-lite',
+        contents=prompt,
+        config=config
+    )
+    return response.text or ""
+
