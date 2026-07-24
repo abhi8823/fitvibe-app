@@ -121,4 +121,4 @@ Please provide:
 ## 6. Key Learnings & Reflection
 - **Vibe Coding Efficiency:** Combining automated scaffolding with AI-native coding assistants allows rapid creation of professional-grade applications.
 - **Single-Container Advantage:** Packaging the frontend compilation inside Docker and hosting the static directory via FastAPI completely removes CORS config headaches and allows deploying to simple cloud platforms (like AWS App Runner) in under 5 minutes on a single port.
-- **UX of AI:** Implementing streaming output instead of spinners makes applications feel instantaneous and drastically increases user satisfaction.
+- **UX of AI:** Implementing streaming output instead of spinners makes applications feel instantaneous and drastically increases user satisfaction
