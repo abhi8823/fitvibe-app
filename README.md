@@ -3,7 +3,9 @@
 **Application Name:** Spark Ignite – Personal AI Diet & Workout Coach  
 **Author:** Vibe Coding Learner  
 **Date:** July 2026  
-
+**GitHub Link:** https://github.com/abhi8823/Sparkignite
+**Server Link:** 
+Direct Link to run Application: https://share.google/BTz79o6rTRpoqZgOX
 ---
 
 ## 1. Application Overview & Tech Stack
