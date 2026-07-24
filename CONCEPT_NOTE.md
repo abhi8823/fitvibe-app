@@ -1,6 +1,6 @@
-# Project Concept Note: FitVibe.AI
+# Project Concept Note: Spark ignite.AI
 
-**Project Title / Application Name:** FitVibe – Personal AI Diet & Workout Coach  
+**Project Title / Application Name:** Spark ignite– Personal AI Diet & Workout Coach  
 **Target URL:** [To be pasted after AWS deployment]  
 **LLM Model & API:** Google Gemini API (`gemini-2.5-flash`)
 
