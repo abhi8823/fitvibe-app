@@ -1,4 +1,4 @@
-# AWS Deployment & VS Code Runner Guide: FitVibe.AI
+# AWS Deployment & VS Code Runner Guide: Spark Ignite
 
 This guide details how to run the project locally inside **VS Code** and deploy it to **AWS App Runner** using the pre-configured Docker setup.
 
@@ -66,14 +66,14 @@ Follow these steps to run the application inside VS Code:
 This is the recommended method. When you push updates to GitHub, AWS App Runner will automatically redeploy the new code.
 
 #### Step 1: Push Code to GitHub
-1. Create a repository on GitHub (e.g., `fitvibe-app`).
+1. Create a repository on GitHub (e.g., `Spark Ignite-app`).
 2. Run these commands in the root of your project (`D:\IBM2`):
    ```bash
    git init
    git add .
    git commit -m "initial commit"
    git branch -M main
-   git remote add origin https://github.com/your-username/fitvibe-app.git
+   git remote add origin https://github.com/your-username/Spark Ignite-app.git
    git push -u origin main
    ```
 
@@ -84,14 +84,14 @@ This is the recommended method. When you push updates to GitHub, AWS App Runner 
 4. Set up the source connection:
    - **Repository type:** Source code repository.
    - **Provider:** GitHub.
-   - Click **Add new** to authorize AWS to access your GitHub account, then select your `fitvibe-app` repository and `main` branch.
+   - Click **Add new** to authorize AWS to access your GitHub account, then select your `Spark Ignite-app` repository and `main` branch.
 5. In **Deployment settings**, select **Automatic** (so code changes trigger auto-deployments) and click **Next**.
 6. Set up build configurations:
    - Select **Configure all settings here**.
    - **Runtime:** `Docker` (App Runner will read our `Dockerfile`).
    - Click **Next**.
 7. Configure service:
-   - **Service name:** `fitvibe-coach`.
+   - **Service name:** `Spark Ignite-coach`.
    - **Virtual CPU & Memory:** `1 vCPU & 2 GB` (App Runner Free Tier/basic sizes are sufficient).
    - **Port:** `8000` (FastAPI runs on 8000).
    - **Environment variables:**
@@ -109,19 +109,19 @@ Within 3 to 5 minutes, AWS will provision your container, configure HTTPS, and g
 If you prefer to build the container locally and upload it:
 
 1. **Create an ECR Repository:**
-   Go to AWS ECR Console and create a private repository named `fitvibe`.
+   Go to the AWS ECR Console and create a private repository named `Spark Ignite`.
 2. **Authenticate Docker to ECR:**
    ```bash
    aws ecr get-login-password --region <your-region> | docker login --username AWS --password-stdin <aws_account_id>.dkr.ecr.<your-region>.amazonaws.com
    ```
 3. **Build and Tag Image:**
    ```bash
-   docker build -t fitvibe .
-   docker tag fitvibe:latest <aws_account_id>.dkr.ecr.<your-region>.amazonaws.com/fitvibe:latest
+   docker build -t Spark Ignite .
+   docker tag Spark Ignite:latest <aws_account_id>.dkr.ecr.<your-region>.amazonaws.com/Spark Ignite:latest
    ```
 4. **Push to ECR:**
    ```bash
-   docker push <aws_account_id>.dkr.ecr.<your-region>.amazonaws.com/fitvibe:latest
+   docker push <aws_account_id>.dkr.ecr.<your-region>.amazonaws.com/Spark Ignite:latest
    ```
 5. **Create App Runner Service:**
    Select **Container registry** -> **Amazon ECR**, choose the image, specify `GEMINI_API_KEY` in environment variables, set port to `8000`, and deploy.
