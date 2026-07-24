@@ -1,4 +1,4 @@
-# Project Report: FitVibe.AI
+# Project Report: Spark ignite.Ai
 
 **Application Name:** FitVibe – Personal AI Diet & Workout Coach  
 **Author:** Vibe Coding Learner  
