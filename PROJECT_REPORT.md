@@ -1,13 +1,13 @@
-# Project Report: FitVibe.AI
+# Project Report: Spark Ignite
 
-**Application Name:** FitVibe – Personal AI Diet & Workout Coach  
+**Application Name:** Spark Ignite – Personal AI Diet & Workout Coach  
 **Author:** Vibe Coding Learner  
 **Date:** July 2026  
 
 ---
 
 ## 1. Application Overview & Tech Stack
-FitVibe is a full-stack, AI-native web application designed to democratize fitness coaching. It provides users with customized training and nutritional plans, combined with a continuous conversational AI coach.
+Spark Ignite is a full-stack, AI-native web application designed to democratize fitness coaching. It provides users with customized training and nutritional plans, combined with a continuous conversational AI coach.
 
 ### Tech Stack Details:
 - **Frontend:** React + Vite SPA. Crafted using semantic HTML and custom, premium Vanilla CSS variables, glassmorphic layouts, and micro-animations to satisfy high visual excellence standards.
@@ -22,14 +22,14 @@ FitVibe is a full-stack, AI-native web application designed to democratize fitne
 To achieve high-quality, structured output without rambling, a systematic prompting strategy was employed:
 
 ### Role-Based Framing
-The model is instructed to assume the identity of an elite wellness coach (**FitVibe**). 
+The model is instructed to assume the identity of an elite wellness coach (**Spark Ignite**). 
 
 ### Markdown Output Structuring
 The system instructions enforce the use of clean markdown: bolding for crucial values (e.g., **calories**), list items for workouts, and markdown tables for calendars.
 
 ### System Instructions Snippet:
 ```text
-You are FitVibe, an elite, motivational, and highly knowledgeable AI Health, Nutrition, and Workout Coach.
+You are Spark Ignite, an elite, motivational, and highly knowledgeable AI Health, Nutrition, and Workout Coach.
 Your goal is to help the user achieve their fitness targets with precise, actionable, and science-backed advice.
 Maintain a supportive, energetic, and positive tone. Make your answers concise, structured, and easy to read
 using markdown (bullet points, bold highlights, sub-headers). Avoid lengthy paragraphs.
